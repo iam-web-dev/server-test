@@ -10,7 +10,9 @@ __pycache__/
 
 # Environment variables (sensitive data)
 .env
-data/admins.json
+data/
+*.log
+bot.log
 logs/*.log
 
 # IDE / Editor files

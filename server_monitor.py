@@ -272,6 +272,14 @@ def check_all_services(services: list[str]) -> list[dict]:
 # =====================================================================
 # KENGAYTIRILGAN LOG VA SERVER HARAKATLARINI TAHLIL QILISH (CLASSIFIER)
 # =====================================================================
+def is_ignorable_log_line(line_lower: str) -> bool:
+    """Ahamiyatsiz, vaqtinchalik yoki shovqinli (spam) loglarni chetlatish."""
+    for pattern in getattr(config, "IGNORE_LOG_PATTERNS", []):
+        if pattern in line_lower:
+            return True
+    return False
+
+
 def classify_log_entry(raw_line: str, source: str = "") -> dict | None:
     """
     Har qanday log satrini tahlil qilib, uning qaysi server harakati yoki
@@ -282,6 +290,10 @@ def classify_log_entry(raw_line: str, source: str = "") -> dict | None:
         return None
 
     line_lower = line.lower()
+
+    # Spam va keraksiz shovqin loglarni chetlatish
+    if is_ignorable_log_line(line_lower):
+        return None
 
     # 1. XAVFSIZLIK VA KIRISH AMALLARI (SECURITY)
     if "security" in config.WATCH_LOG_CATEGORIES:

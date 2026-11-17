@@ -38,6 +38,19 @@ journalctl_cursor: str | None = None
 # Key: (category, signature) -> Value: (last_timestamp, repeat_count)
 recent_log_throttles: dict[str, list] = {}
 
+SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "WARNING": 2, "NOTICE": 1, "INFO": 0, "LOW": 0}
+
+
+def is_alert_allowed(item: dict) -> bool:
+    """
+    Faqat belgilangan darajadagi (default: HIGH va CRITICAL) muhim hodisalarni adminga push-alert qilish.
+    Oddiy kichik dastur ogohlantirishlari (warnings) yoki mayda xatolar spam bo'lmasligi uchun cheklanadi.
+    """
+    min_sev = getattr(config, "MIN_ALERT_SEVERITY", "HIGH").upper()
+    min_level = SEVERITY_ORDER.get(min_sev, 3)
+    item_sev = item.get("severity", "INFO").upper()
+    return SEVERITY_ORDER.get(item_sev, 0) >= min_level
+
 
 async def broadcast_alert(bot: Bot, text: str):
     """
@@ -234,6 +247,8 @@ async def check_log_events_and_alert(bot: Bot):
                 for raw_line in new_lines:
                     classified = server_monitor.classify_log_entry(raw_line, source=os.path.basename(log_path))
                     if classified:
+                        if not is_alert_allowed(classified):
+                            continue
                         if _should_throttle(classified):
                             continue
 
@@ -265,6 +280,8 @@ async def check_log_events_and_alert(bot: Bot):
                 journalctl_cursor = new_cursor
 
             for ev in events:
+                if not is_alert_allowed(ev):
+                    continue
                 if _should_throttle(ev):
                     continue
 

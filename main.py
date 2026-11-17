@@ -113,13 +113,25 @@ def format_top_processes() -> str:
 
 
 def format_projects_summary(projects: dict) -> str:
-    """Serverdagi loyihalar (PM2, Docker, Systemd, Jarayonlar) ro'yxatini chiqarish."""
+    """Serverdagi loyihalar (Projects papkasi, PM2, Docker, Systemd, Jarayonlar) ro'yxatini chiqarish."""
     lines = [
         "🚀 <b>SERVERDAGI FAOL LOYIHALAR VA JARAYONLAR:</b>",
         "━━━━━━━━━━━━━━━━━━━━",
     ]
 
     has_any = False
+
+    # Projects papkasidagi loyihalar (tg-manager, frontend, backend...)
+    apps_list = projects.get("apps", [])
+    if apps_list:
+        has_any = True
+        lines.append("📁 <b>Projects Papkasidagi Loyihalar:</b>")
+        for a in apps_list:
+            st = a.get("status", "").lower()
+            s_icon = "🟢" if "active" in st or "running" in st else ("🔴" if "failed" in st else "⚪️")
+            lines.append(f"  {s_icon} <b>{a['name']}</b>: <code>{a['status']}</code>")
+            lines.append(f"     <i>{a.get('details', '')}</i>")
+        lines.append("")
 
     # PM2
     pm2_list = projects.get("pm2", [])

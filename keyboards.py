@@ -126,10 +126,22 @@ def get_test_actions_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_projects_inline_keyboard(projects: dict) -> InlineKeyboardMarkup:
-    """Serverdagi loyihalar (Systemd, PM2, Docker, Processes) bo'yicha interaktiv tugmalar."""
+    """Serverdagi barcha loyihalar (Projects papkasi, Systemd, PM2, Docker, Jarayonlar) bo'yicha interaktiv tugmalar."""
     buttons = []
 
-    # 1. PM2 ilovalar
+    # 1. Projects papkasidagi asosiy loyihalar (tg-manager, frontend, backend, va h.k.)
+    for item in projects.get("apps", []):
+        st = item.get("status", "").lower()
+        status_icon = "🟢" if "active" in st or "running" in st else ("🔴" if "failed" in st else "⚪️")
+        proj_type = item.get("type", "manage")
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"{status_icon} 🚀 {item['name']} ({item['type'].upper()})",
+                callback_data=f"proj_menu:{proj_type}:{item['id']}",
+            )
+        ])
+
+    # 2. PM2 ilovalar
     for item in projects.get("pm2", [])[:4]:
         status_icon = "🟢" if item.get("status") == "online" else "🔴"
         buttons.append([
@@ -139,7 +151,7 @@ def get_projects_inline_keyboard(projects: dict) -> InlineKeyboardMarkup:
             )
         ])
 
-    # 2. Docker konteynerlar
+    # 3. Docker konteynerlar
     for item in projects.get("docker", [])[:4]:
         status_icon = "🟢" if "running" in item.get("status", "").lower() or "up" in item.get("status", "").lower() else "⚪️"
         buttons.append([
@@ -149,8 +161,11 @@ def get_projects_inline_keyboard(projects: dict) -> InlineKeyboardMarkup:
             )
         ])
 
-    # 3. Maxsus systemd servislari
+    # 4. Maxsus systemd servislari
     for item in projects.get("systemd", [])[:4]:
+        # Agar bu servis allaqachon apps ro'yxatida bo'lsa, takrorlamaymiz
+        if any(app['name'] == item['name'] for app in projects.get("apps", [])):
+            continue
         status_icon = "🟢" if item.get("status") == "active" else "🔴"
         buttons.append([
             InlineKeyboardButton(
@@ -159,11 +174,11 @@ def get_projects_inline_keyboard(projects: dict) -> InlineKeyboardMarkup:
             )
         ])
 
-    # 4. Erkin yurgan alohida jarayonlar
+    # 5. Erkin yurgan alohida jarayonlar (backend, frontend, worker)
     for item in projects.get("processes", [])[:4]:
         buttons.append([
             InlineKeyboardButton(
-                text=f"⚡️ {item['name'][:20]}",
+                text=f"⚡️ {item['name'][:22]}",
                 callback_data=f"proc_info:{item['id']}",
             )
         ])
@@ -171,14 +186,14 @@ def get_projects_inline_keyboard(projects: dict) -> InlineKeyboardMarkup:
     # Boshqaruv tugmalari
     buttons.append([
         InlineKeyboardButton(text="🔄 Qayta skanerlash", callback_data="menu_projects"),
-        InlineKeyboardButton(text="📊 Statlar", callback_data="show_stats"),
+        InlineKeyboardButton(text="📊 Server Statlari", callback_data="show_stats"),
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def get_project_action_keyboard(proj_type: str, proj_id: str) -> InlineKeyboardMarkup:
-    """Tanlangan loyiha uchun Start/Stop/Restart/Logs amallari."""
+    """Tanlangan loyiha uchun Start/Stop/Restart/Status/Logs amallari."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -187,7 +202,10 @@ def get_project_action_keyboard(proj_type: str, proj_id: str) -> InlineKeyboardM
                 InlineKeyboardButton(text="▶️ Start", callback_data=f"p_act:start:{proj_type}:{proj_id}"),
             ],
             [
+                InlineKeyboardButton(text="📊 Holat (Status)", callback_data=f"p_act:status:{proj_type}:{proj_id}"),
                 InlineKeyboardButton(text="📜 Oxirgi Loglar", callback_data=f"p_logs:{proj_type}:{proj_id}"),
+            ],
+            [
                 InlineKeyboardButton(text="⬅️ Loyihalar ro'yxati", callback_data="menu_projects"),
             ],
         ]
