@@ -10,6 +10,8 @@ __pycache__/
 
 # Environment variables (sensitive data)
 .env
+data/admins.json
+logs/*.log
 
 # IDE / Editor files
 .vscode/
