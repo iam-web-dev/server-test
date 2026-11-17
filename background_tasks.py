@@ -1,4 +1,5 @@
 import asyncio
+import html
 import logging
 import os
 import time
@@ -10,6 +11,7 @@ from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError, TelegramRetryAfter
 
 import auth_manager
+import boot_notifier
 import config
 import server_monitor
 
@@ -239,6 +241,7 @@ async def check_log_events_and_alert(bot: Bot):
                         if len(snippet) > 600:
                             snippet = snippet[:600] + "... [qisqartirildi]"
 
+                        escaped_snippet = html.escape(snippet)
                         alert_text = (
                             f"{classified['emoji']} <b>MUHIM SERVER HARAKATI:</b>\n"
                             f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -246,7 +249,7 @@ async def check_log_events_and_alert(bot: Bot):
                             f"📁 <b>Manba:</b> <code>{classified['source']}</code>\n"
                             f"🕒 <b>Vaqt:</b> <code>{now_str}</code>\n"
                             f"📋 <b>Log matni:</b>\n"
-                            f"<pre>{snippet}</pre>"
+                            f"<pre>{escaped_snippet}</pre>"
                         )
                         await broadcast_alert(bot, alert_text)
             else:
@@ -269,6 +272,7 @@ async def check_log_events_and_alert(bot: Bot):
                 if len(snippet) > 600:
                     snippet = snippet[:600] + "... [qisqartirildi]"
 
+                escaped_snippet = html.escape(snippet)
                 alert_text = (
                     f"{ev['emoji']} <b>MUHIM SERVER HARAKATI:</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -276,7 +280,7 @@ async def check_log_events_and_alert(bot: Bot):
                     f"⚙️ <b>Manba:</b> <code>journalctl (tizim)</code>\n"
                     f"🕒 <b>Vaqt:</b> <code>{now_str}</code>\n"
                     f"📋 <b>Log matni:</b>\n"
-                    f"<pre>{snippet}</pre>"
+                    f"<pre>{escaped_snippet}</pre>"
                 )
                 await broadcast_alert(bot, alert_text)
         except Exception as e:
@@ -292,6 +296,12 @@ async def start_server_monitoring(bot: Bot):
 
     # Boshlang'ich servislar holatini olib olamiz
     await check_services_and_alert(bot, is_initial=True)
+
+    # Server qayta yoqilgan bo'lsa (yangi boot), darhol adminlarga alert yuboramiz
+    try:
+        await boot_notifier.check_boot_and_notify(bot)
+    except Exception as e:
+        logger.warning(f"Boot tekshiruvida xatolik: {e}")
 
     while True:
         try:

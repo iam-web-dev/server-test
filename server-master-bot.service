@@ -1,0 +1,19 @@
+[Unit]
+Description=Server SysAdmin & DevOps Master Tool Telegram Bot
+After=network.target network-online.target systemd-journald.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/iamwebdev/Projects/Bots
+ExecStart=/home/iamwebdev/Projects/Bots/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment="PYTHONUNBUFFERED=1"
+Environment="DEBIAN_FRONTEND=noninteractive"
+
+[Install]
+WantedBy=multi-user.target
