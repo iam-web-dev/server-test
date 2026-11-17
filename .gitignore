@@ -2,20 +2,47 @@
 .venv/
 venv/
 ENV/
+env/
 
-# Python cache
+# Python cache & compiled files
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# Environment variables (sensitive data)
+# Environment variables & secrets
 .env
+.env.*
+!.env.example
+
+# Databases & local data
 data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Logs & Runtime files
 *.log
 bot.log
-logs/*.log
+logs/
+*.pid
 
-# IDE / Editor files
+# Telegram sessions
+*.session
+*.session-journal
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS files
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+

@@ -340,10 +340,13 @@ async def control_project(proj_type: str, proj_id: str, action: str) -> tuple[bo
             cwd=cwd,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=12.0)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=20.0)
         except asyncio.TimeoutError:
-            proc.kill()
-            return True, f"⏳ <code>{' '.join(cmd)}</code> buyrug'i fonda bajarilmoqda..."
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            return False, f"⚠️ <code>{' '.join(cmd)}</code> buyrug'i belgilangan vaqt (20s) ichida yakunlanmadi (timeout)."
 
         out = stdout.decode("utf-8", errors="replace").strip()
         err = stderr.decode("utf-8", errors="replace").strip()
